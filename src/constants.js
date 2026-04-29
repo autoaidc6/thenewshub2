@@ -55,6 +55,7 @@ export const T = {
 
 export const RSS_SOURCES = {
   top:      ["https://feeds.bbci.co.uk/news/rss.xml","https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml","https://www.theguardian.com/world/rss"],
+  uk:       ["https://feeds.bbci.co.uk/news/uk/rss.xml","https://www.theguardian.com/uk/rss"],
   world:    ["https://feeds.bbci.co.uk/news/world/rss.xml","https://www.aljazeera.com/xml/rss/all.xml","https://www.theguardian.com/world/rss"],
   europe:   ["https://feeds.bbci.co.uk/news/world/europe/rss.xml","https://rss.dw.com/xml/rss-en-eu","https://feeds.thelocal.com/rss/es","https://feeds.thelocal.com/rss/fr","https://feeds.thelocal.com/rss/it","https://feeds.bbci.co.uk/news/uk/rss.xml","https://www.theguardian.com/uk/rss"],
   americas: ["https://feeds.bbci.co.uk/news/world/us_and_canada/rss.xml","https://rss.nytimes.com/services/xml/rss/nyt/US.xml","https://feeds.bbci.co.uk/news/world/latin_america/rss.xml"],

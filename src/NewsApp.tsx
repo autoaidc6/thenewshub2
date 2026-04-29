@@ -414,6 +414,7 @@ export default function NewsApp() {
   const [searchQuery, setSearchQuery] = useState("");
   const [readerItem, setReaderItem] = useState<any>(null);
   const [choiceItem, setChoiceItem] = useState<any>(null);
+  const [userCountry, setUserCountry] = useState<string|null>(null);
   
   const [articles, setArticles] = useState([]);
   const [videos, setVideos] = useState([]);
@@ -424,6 +425,23 @@ export default function NewsApp() {
   const [bookmarks, setBookmarks] = useState(loadBookmarks);
 
   const th = night ? T.night : T.day;
+
+  // Determine user country
+  useEffect(() => {
+    fetch('https://ipapi.co/json/')
+      .then(r => r.json())
+      .then(data => {
+        if (data && data.country_code) setUserCountry(data.country_code);
+        else {
+           const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+           if (tz.includes("London") || tz.includes("Europe/Belfast")) setUserCountry("GB");
+        }
+      })
+      .catch(() => {
+        const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        if (tz.includes("London") || tz.includes("Europe/Belfast")) setUserCountry("GB");
+      });
+  }, []);
 
   // Sync subTabs
   useEffect(() => {
@@ -452,18 +470,30 @@ export default function NewsApp() {
         }
       } else {
         const feedKey = activeCategory === "vibe" ? (subTab || "goodnews") : activeCategory;
-        const res = await Promise.allSettled((RSS_SOURCES[feedKey]||[]).map(url => fetchFeed(url)));
-        let all = res.flatMap(r => r.status === "fulfilled" ? r.value : []);
+        let urlsToFetch = RSS_SOURCES[feedKey] || [];
+        const isUKTop = feedKey === "top" && userCountry === "GB";
+        if (isUKTop) {
+            urlsToFetch = [...(RSS_SOURCES["uk"] || []), ...urlsToFetch];
+        }
+        
+        const res = await Promise.allSettled(urlsToFetch.map((url:string) => fetchFeed(url)));
+        let all = res.flatMap((r:any, idx:number) => 
+            r.status === "fulfilled" ? r.value.map((item:any) => ({...item, _isUK: (isUKTop && idx < (RSS_SOURCES["uk"] || []).length)})) : []
+        );
         let filtered = all.filter(a => passesFilter(a, feedKey));
         if (filtered.length < 3) filtered = all;
-        setArticles(dedupe(filtered).sort((a,b)=>new Date(b.publishedAt).getTime()-new Date(a.publishedAt).getTime()));
+        setArticles(dedupe(filtered).sort((a:any,b:any)=>{
+            if (a._isUK && !b._isUK) return -1;
+            if (!a._isUK && b._isUK) return 1;
+            return new Date(b.publishedAt).getTime()-new Date(a.publishedAt).getTime();
+        }));
       }
     } catch(e) { 
-      setError(e.message); 
+      setError((e as Error).message); 
     } finally { 
       setLoading(false); 
     }
-  }, [activeCategory, subTab]);
+  }, [activeCategory, subTab, userCountry]);
 
   useEffect(() => { loadData(); }, [loadData]);
 
