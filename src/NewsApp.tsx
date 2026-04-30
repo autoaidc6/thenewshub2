@@ -157,10 +157,12 @@ function BiasDot({ source }: any) {
   );
 }
 
-function NewsCard({ article, featured, onRead, th, bookmarks, onBookmark }: any) {
+function NewsCard({ article, featured, onRead, th, bookmarks, onBookmark, activeCategory }: any) {
   const [hovered, setHovered] = useState(false);
   const [imgErr, setImgErr] = useState(false);
   const isBookmarked = bookmarks.some((b: any) => b.id === article.id);
+
+  const isLiveBreaking = featured && activeCategory === "top";
 
   return (
     <article
@@ -182,7 +184,12 @@ function NewsCard({ article, featured, onRead, th, bookmarks, onBookmark }: any)
       className="group"
     >
       <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:"1rem" }}>
-        <span style={{ fontSize:"0.625rem", fontFamily:"monospace", color:th.textSource, textTransform:"uppercase", letterSpacing:"0.05em" }}>
+        <span style={{ fontSize:"0.625rem", fontFamily:"monospace", color:th.textSource, textTransform:"uppercase", letterSpacing:"0.05em", display:"flex", alignItems:"center", gap:"0.5rem" }}>
+          {isLiveBreaking && (
+            <span className="live-pulse" style={{ background: th.live || "red", color: "#fff", padding: "0.15rem 0.4rem", borderRadius: 4, fontWeight: "bold", display: "inline-flex", alignItems: "center", gap: "0.25rem" }}>
+                <span style={{ width: 4, height: 4, background: "#fff", borderRadius: "50%" }}></span> LIVE
+            </span>
+          )}
           {article.source} • {timeAgo(article.publishedAt)}
         </span>
         <span style={{ opacity: hovered ? 1 : 0, transition:"opacity 0.2s", color:th.textMuted }}>↗</span>
@@ -194,22 +201,25 @@ function NewsCard({ article, featured, onRead, th, bookmarks, onBookmark }: any)
         </div>
       )}
 
-      <h2 style={{ fontFamily:"system-ui, sans-serif", fontSize:featured?"1.75rem":"1.125rem", fontWeight:900, color:th.textHead, lineHeight:1.2, margin:0, letterSpacing:"-0.02em", marginBottom:"1rem" }}>
+      <h2 style={{ fontFamily:"'Playfair Display', Georgia, serif", fontSize:featured?"2rem":"1.25rem", fontWeight:900, color:th.textHead, lineHeight:1.2, margin:0, letterSpacing:"-0.02em", marginBottom:"1rem" }}>
         {article.title}
       </h2>
       
       {article.description && (
-        <p style={{ color:th.textBody, fontSize:"0.875rem", lineHeight:1.5, margin:0, display:"-webkit-box", WebkitLineClamp:featured?3:2, WebkitBoxOrient:"vertical", overflow:"hidden", marginBottom:"1.5rem" }}>
+        <p style={{ fontFamily:"'Source Serif 4', 'Charter', serif", color:th.textBody, fontSize:featured?"1rem":"0.875rem", lineHeight:1.6, margin:0, display:"-webkit-box", WebkitLineClamp:featured?3:2, WebkitBoxOrient:"vertical", overflow:"hidden", marginBottom:"1.5rem" }}>
           {article.description}
         </p>
       )}
 
-      <div style={{ display:"flex", alignItems:"center", gap:"0.75rem", marginTop:"auto" }} onClick={e => e.stopPropagation()}>
+      <div style={{ display:"flex", alignItems:"center", gap:"0.75rem", marginTop:"auto", flexWrap:"wrap" }} onClick={e => e.stopPropagation()}>
         <button onClick={() => onRead('in-app')} style={{ background:th.bgInput, border:`1px solid ${th.border}`, color:th.textHead, fontSize:"0.625rem", padding:"0.4rem 0.6rem", borderRadius:4, cursor:"pointer", textTransform:"uppercase", fontWeight:"bold" }}>Read In-App</button>
         <button onClick={() => onRead('browser')} style={{ background:th.bgInput, border:`1px solid ${th.border}`, color:th.textHead, fontSize:"0.625rem", padding:"0.4rem 0.6rem", borderRadius:4, cursor:"pointer", textTransform:"uppercase", fontWeight:"bold" }}>Browser ↗</button>
         <div style={{ height:1, flex:1, background:th.border }}></div>
-        <button onClick={(e)=>{e.stopPropagation();onBookmark(article);}} style={{ background:"transparent", border:"none", color:isBookmarked?th.accent:th.textMuted, cursor:"pointer", fontSize:"0.625rem", fontFamily:"monospace", textTransform:"uppercase", letterSpacing:"0.1em" }}>
-          {isBookmarked?"Saved":"Save"}
+        <button onClick={(e)=>{e.stopPropagation(); if (navigator.share && article.url) navigator.share({title: article.title, url: article.url}).catch(()=>{window.open(article.url)}); else window.open(article.url); }} style={{ background:"transparent", border:"none", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", padding:"0.25rem", opacity: 0.6, transition:"opacity 0.2s" }} onMouseEnter={e=>e.currentTarget.style.opacity="1"} onMouseLeave={e=>e.currentTarget.style.opacity="0.6"}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={th.textHead} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path><polyline points="16 6 12 2 8 6"></polyline><line x1="12" y1="2" x2="12" y2="15"></line></svg>
+        </button>
+        <button onClick={(e)=>{e.stopPropagation();onBookmark(article);}} style={{ background:"transparent", border:"none", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", padding:"0.25rem", opacity: 0.6, transition:"opacity 0.2s" }} onMouseEnter={e=>e.currentTarget.style.opacity="1"} onMouseLeave={e=>e.currentTarget.style.opacity="0.6"}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill={isBookmarked ? th.textHead : "none"} stroke={th.textHead} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>
         </button>
       </div>
     </article>
@@ -286,7 +296,7 @@ function PodcastCard({ podcast, onPlay, th }: any) {
         <h3 style={{ fontSize:"1rem", fontWeight:700, color:th.textHead, lineHeight:1.3, margin:"0 0 0.5rem 0", whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>
           {podcast.title}
         </h3>
-        <div style={{ display:"flex", alignItems:"center", gap:"0.5rem", marginTop:"auto" }} onClick={e => e.stopPropagation()}>
+        <div style={{ display:"flex", alignItems:"center", gap:"0.5rem", marginTop:"auto", flexWrap:"wrap" }} onClick={e => e.stopPropagation()}>
            <button onClick={() => onPlay('in-app')} style={{ background:th.bgInput, border:`1px solid ${th.border}`, color:th.textHead, fontSize:"0.625rem", padding:"0.3rem 0.6rem", borderRadius:4, cursor:"pointer", textTransform:"uppercase", fontWeight:"bold", fontFamily:"monospace" }}>IN-APP ▶</button>
            <button onClick={() => onPlay('browser')} style={{ background:th.bgInput, border:`1px solid ${th.border}`, color:th.textHead, fontSize:"0.625rem", padding:"0.3rem 0.6rem", borderRadius:4, cursor:"pointer", textTransform:"uppercase", fontWeight:"bold", fontFamily:"monospace" }}>web ↗</button>
            
@@ -317,6 +327,8 @@ function RadioCard({ radio, onPlay, th }: any) {
         alignItems: "center",
         justifyContent: "space-between",
         height: "100%",
+        flexWrap: "wrap",
+        gap: "1rem"
       }}
     >
       <div style={{ display:"flex", alignItems:"center", gap:"1rem" }}>
@@ -339,7 +351,7 @@ function RadioCard({ radio, onPlay, th }: any) {
 }
 
 
-function ArticleReader({ article, th }: any) {
+function ArticleReader({ article, th, isMobile }: any) {
   const [content, setContent] = useState<any>({ type: "loading" });
 
   useEffect(() => {
@@ -349,8 +361,13 @@ function ArticleReader({ article, th }: any) {
       .then(r => r.json())
       .then(data => {
         if (!active) return;
-        if (data.status === "ok") setContent({ type: "success", text: data.content });
-        else setContent({ type: "error", message: data.error || "Failed to extract." });
+        if (data.error) {
+          setContent({ type: "error", message: data.error });
+        } else if (data.text) {
+          setContent({ type: "success", text: data.text });
+        } else {
+          setContent({ type: "error", message: "Failed to extract." });
+        }
       })
       .catch(e => {
         if (active) setContent({ type: "error", message: e.message });
@@ -359,31 +376,36 @@ function ArticleReader({ article, th }: any) {
   }, [article.url]);
 
   return (
-    <div style={{ padding: "3rem 2rem", maxWidth: 740, margin: "0 auto", fontSize: "1.0625rem", lineHeight: 1.8, color: th.textBody }}>
-       {article.image && <img src={article.image} alt="" style={{ width: "100%", borderRadius: 8, marginBottom: "2rem", boxShadow: "0 4px 20px rgba(0,0,0,0.1)" }} />}
+    <div style={{ padding: isMobile ? "1.5rem 1.25rem" : "4rem 2rem", maxWidth: 680, margin: "0 auto", fontSize: isMobile ? "18px" : "20px", lineHeight: 1.6, color: th.textBody, fontFamily: "'Source Serif 4', 'Charter', serif" }}>
+       {article.image && <img src={article.image} alt="" style={{ width: "100%", borderRadius: 8, marginBottom: "2rem" }} />}
        
-       <h1 style={{ fontFamily: "system-ui, sans-serif", fontSize: "2.5rem", fontWeight: 900, color: th.textHead, marginBottom: "1rem", lineHeight: 1.1, letterSpacing: "-0.02em" }}>{article.title}</h1>
+       <h1 style={{ fontFamily: "'Playfair Display', Georgia, serif", fontSize: isMobile ? "1.75rem" : "2.5rem", fontWeight: 900, color: th.textHead, marginBottom: "1.5rem", lineHeight: 1.2, letterSpacing: "-0.02em" }}>{article.title}</h1>
        
-       <div style={{ fontSize: "0.875rem", color: th.textSource, marginBottom: "2.5rem", fontFamily: "monospace", textTransform: "uppercase", letterSpacing: "0.05em", borderBottom: `1px solid ${th.border}`, paddingBottom: "1rem" }}>
+       <div style={{ fontSize: "0.875rem", color: th.textSource, marginBottom: "3rem", fontFamily: "system-ui, sans-serif", textTransform: "uppercase", letterSpacing: "0.05em", borderBottom: `1px solid ${th.border}`, paddingBottom: "1.5rem" }}>
          {article.source} <span style={{color: th.textMuted}}>• {new Date(article.publishedAt).toLocaleString()}</span>
        </div>
        
        {content.type === "loading" && (
-           <div style={{ textAlign: "center", padding: "4rem", color: th.textMuted }}>
-               <div style={{ display: "inline-block", width: 24, height: 24, border: `2px solid ${th.border}`, borderTopColor: th.accent, borderRadius: "50%", animation: "spin 1s linear infinite" }} />
-               <div style={{ marginTop: "1rem", fontSize: "0.875rem", fontFamily: "monospace", textTransform: "uppercase", letterSpacing: "0.1em" }}>Extracting article...</div>
-               <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+           <div style={{ textAlign: "left", padding: "1rem 0" }}>
+               {[...Array(4)].map((_, i) => (
+                   <div key={i} style={{ marginBottom: "2rem" }}>
+                       <div style={{ height: "1em", background: th.bgSkeleton2, marginBottom: "0.6em", borderRadius: 4, width: "100%" }} />
+                       <div style={{ height: "1em", background: th.bgSkeleton2, marginBottom: "0.6em", borderRadius: 4, width: "100%" }} />
+                       <div style={{ height: "1em", background: th.bgSkeleton2, marginBottom: "0.6em", borderRadius: 4, width: "100%" }} />
+                       <div style={{ height: "1em", background: th.bgSkeleton2, marginBottom: "0.6em", borderRadius: 4, width: "80%" }} />
+                   </div>
+               ))}
            </div>
        )}
        
        {content.type === "error" && (
-         <div style={{ padding: "2rem", background: th.bgSkeleton1, borderRadius: 8, border: `1px solid ${th.border}`, textAlign: "center" }}>
+         <div style={{ padding: "2rem", background: th.bgSkeleton1, borderRadius: 8, border: `1px solid ${th.border}`, textAlign: "center", fontFamily: "system-ui, sans-serif" }}>
            <h3 style={{ color: th.textHead, marginTop: 0 }}>Extraction Unsuccessful</h3>
            <p style={{ color: th.textMuted, fontSize: "0.875rem" }}>The article structure could not be parsed automatically.</p>
            
            <div style={{ marginTop: "2rem", textAlign: "left" }}>
              <h4 style={{ color: th.textHead, fontSize: "0.875rem", textTransform: "uppercase", letterSpacing: "0.05em" }}>Brief Summary:</h4>
-             <p style={{ fontStyle: "italic", color: th.textBody }}>{article.description}</p>
+             <p style={{ fontStyle: "italic", color: th.textBody, fontSize: "1.125rem", lineHeight: 1.6, marginTop: "0.5rem" }}>{article.description}</p>
            </div>
            
            <button onClick={() => window.open(article.url, "_blank")} style={{ padding: "0.75rem 1.5rem", background: th.accentBg, color: th.accent, border: `1px solid ${th.accentBord||th.accent}`, borderRadius: 8, cursor: "pointer", marginTop: "2rem", fontSize: "0.875rem", fontWeight: "bold", textTransform: "uppercase", letterSpacing: "0.05em" }}>
@@ -393,9 +415,11 @@ function ArticleReader({ article, th }: any) {
        )}
        
        {content.type === "success" && (
-         <div style={{ whiteSpace: "pre-wrap", overflowWrap: "break-word" }}>
-             {content.text}
-             <div style={{ marginTop: "4rem", borderTop: `1px solid ${th.border}`, paddingTop: "2rem", textAlign: "center" }}>
+         <div className="drop-cap" style={{ overflowWrap: "break-word" }}>
+             {content.text.split(/\n\s*\n/).map((pLine: string, i: number) => (
+               pLine.trim() ? <p key={i} style={{ marginBottom: "2rem" }}>{pLine.trim()}</p> : null
+             ))}
+             <div style={{ marginTop: "4rem", borderTop: `1px solid ${th.border}`, paddingTop: "2rem", textAlign: "center", fontFamily: "system-ui, sans-serif" }}>
                  <button onClick={() => window.open(article.url, "_blank")} style={{ padding: "0.75rem 1.5rem", background: "transparent", color: th.textMuted, border: `1px solid ${th.border}`, borderRadius: 8, cursor: "pointer", fontSize: "0.875rem", fontWeight: "bold", textTransform: "uppercase", letterSpacing: "0.05em" }}>
                    View Original Source ↗
                  </button>
@@ -406,15 +430,205 @@ function ArticleReader({ article, th }: any) {
   );
 }
 
+function AudioPlayerBar({ item, th, isMobile, onClose }: any) {
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const [isPlaying, setIsPlaying] = useState(true);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.play().catch(e => console.log(e));
+      setIsPlaying(true);
+    }
+  }, [item]);
+
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    
+    const updateTime = () => setCurrentTime(audio.currentTime);
+    const updateDuration = () => setDuration(audio.duration);
+    const handleEnded = () => setIsPlaying(false);
+    
+    audio.addEventListener('timeupdate', updateTime);
+    audio.addEventListener('loadedmetadata', updateDuration);
+    audio.addEventListener('ended', handleEnded);
+
+    return () => {
+      audio.removeEventListener('timeupdate', updateTime);
+      audio.removeEventListener('loadedmetadata', updateDuration);
+      audio.removeEventListener('ended', handleEnded);
+    };
+  }, []);
+
+  const togglePlay = () => {
+    if (!audioRef.current) return;
+    if (isPlaying) audioRef.current.pause();
+    else audioRef.current.play();
+    setIsPlaying(!isPlaying);
+  };
+  
+  const skip = (secs: number) => {
+    if (audioRef.current) audioRef.current.currentTime += secs;
+  };
+
+  const formatTime = (secs: number) => {
+    if (!secs || isNaN(secs)) return "0:00";
+    const m = Math.floor(secs / 60);
+    const s = Math.floor(secs % 60);
+    return `${m}:${s < 10 ? '0':''}${s}`;
+  };
+
+  const handleSeek = (e: any) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const percent = (e.clientX - rect.left) / rect.width;
+    if (audioRef.current && duration) {
+       audioRef.current.currentTime = percent * duration;
+    }
+  };
+
+  const isRadio = !!item.genre;
+  const image = item.image || item.thumbnail;
+  const title = item.title || item.name;
+  const subtitle = item.source || item.podcast || item.genre;
+
+  return (
+    <div style={{
+      position: "fixed", bottom: 0, left: 0, right: 0, height: isMobile ? 120 : 80,
+      background: th.bgHeader, borderTop: `1px solid ${th.border}`,
+      display: "flex", flexDirection: isMobile ? "column" : "row", alignItems: "center", justifyContent: isMobile ? "space-between" : "space-between",
+      padding: isMobile ? "0.75rem 1rem" : "0 2rem", zIndex: 10000, boxShadow: "0 -4px 20px rgba(0,0,0,0.1)",
+      color: th.textHead
+    }}>
+      <audio ref={audioRef} src={item.url || item.mp3} />
+      
+      {isMobile ? (
+        <>
+          <div style={{ width: "100%", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+            {image ? (
+              <img src={image} alt="" style={{ width: 40, height: 40, borderRadius: 8, objectFit: "cover", border: `1px solid ${th.border}` }} />
+            ) : (
+               <div style={{ width: 40, height: 40, borderRadius: 8, background: th.bgSkeleton2, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1rem" }}>📻</div>
+            )}
+            <div style={{ flex: 1, overflow: "hidden" }}>
+              <div style={{ fontWeight: 600, fontSize: "0.875rem", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{title}</div>
+              <div style={{ color: th.textSource, fontSize: "0.75rem", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{subtitle}</div>
+            </div>
+            <button onClick={onClose} style={{ background: "transparent", border: "none", color: th.textMuted, cursor: "pointer", display: "flex", alignItems: "center", padding: "0.5rem" }}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+          </div>
+          
+          <div style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "1rem" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "1.5rem" }}>
+              {!isRadio && (
+                <button onClick={() => skip(-15)} style={{ background: "transparent", border: "none", color: th.textBody, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 11V9a4 4 0 0 1 4-4h14"></path><polyline points="7 23 3 19 7 15"></polyline><path d="M21 13v2a4 4 0 0 1-4 4H3"></path><text x="12" y="15" fontSize="8" strokeWidth="1" stroke="none" fill="currentColor" textAnchor="middle">15</text></svg>
+                </button>
+              )}
+              <button onClick={togglePlay} style={{ background: "transparent", border: "none", color: th.textHead, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                {isPlaying ? (
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>
+                ) : (
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                )}
+              </button>
+              {!isRadio && (
+                <button onClick={() => skip(30)} style={{ background: "transparent", border: "none", color: th.textBody, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 11V9a4 4 0 0 0-4-4H3"></path><polyline points="17 23 21 19 17 15"></polyline><path d="M3 13v2a4 4 0 0 0 4 4h14"></path><text x="12" y="15" fontSize="8" strokeWidth="1" stroke="none" fill="currentColor" textAnchor="middle">30</text></svg>
+                </button>
+              )}
+            </div>
+            
+            {!isRadio && (
+               <div style={{ flex: 1, display: "flex", alignItems: "center", gap: "0.5rem" }} onClick={handleSeek}>
+                 <span style={{ fontSize: "0.625rem", color: th.textMuted }}>{formatTime(currentTime)}</span>
+                 <div style={{ flex: 1, height: 4, background: th.bgSkeleton1, borderRadius: 2, position: "relative", overflow: "hidden" }}>
+                   <div style={{ position: "absolute", top: 0, left: 0, bottom: 0, background: th.accent, width: `${duration ? (currentTime/duration)*100 : 0}%` }} />
+                 </div>
+                 <span style={{ fontSize: "0.625rem", color: th.textMuted }}>{formatTime(duration)}</span>
+               </div>
+            )}
+          </div>
+        </>
+      ) : (
+        <>
+          {/* LEFT: Controls */}
+          <div style={{ display: "flex", alignItems: "center", gap: "1.5rem", minWidth: 200 }}>
+            {!isRadio && (
+              <button onClick={() => skip(-15)} style={{ background: "transparent", border: "none", color: th.textBody, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 11V9a4 4 0 0 1 4-4h14"></path><polyline points="7 23 3 19 7 15"></polyline><path d="M21 13v2a4 4 0 0 1-4 4H3"></path><text x="12" y="15" fontSize="8" strokeWidth="1" stroke="none" fill="currentColor" textAnchor="middle">15</text></svg>
+              </button>
+            )}
+            <button onClick={togglePlay} style={{ background: "transparent", border: "none", color: th.textHead, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              {isPlaying ? (
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>
+              ) : (
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+              )}
+            </button>
+            {!isRadio && (
+              <button onClick={() => skip(30)} style={{ background: "transparent", border: "none", color: th.textBody, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 11V9a4 4 0 0 0-4-4H3"></path><polyline points="17 23 21 19 17 15"></polyline><path d="M3 13v2a4 4 0 0 0 4 4h14"></path><text x="12" y="15" fontSize="8" strokeWidth="1" stroke="none" fill="currentColor" textAnchor="middle">30</text></svg>
+              </button>
+            )}
+          </div>
+
+          {/* CENTER: Track Info & Progress */}
+          <div style={{ flex: 1, display: "flex", alignItems: "center", margin: "0 2rem", maxWidth: 800 }}>
+            {image ? (
+              <img src={image} alt="" style={{ width: 56, height: 56, borderRadius: 8, objectFit: "cover", marginRight: "1rem", border: `1px solid ${th.border}` }} />
+            ) : (
+               <div style={{ width: 56, height: 56, borderRadius: 8, background: th.bgSkeleton2, marginRight: "1rem", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.5rem" }}>📻</div>
+            )}
+            <div style={{ flex: 1, overflow: "hidden" }}>
+               <div style={{ fontWeight: 600, fontSize: "0.9375rem", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", marginBottom: 4 }}>{title}</div>
+               <div style={{ color: th.textSource, fontSize: "0.8125rem", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{subtitle}</div>
+               
+               {!isRadio && (
+                 <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginTop: 4, cursor: "pointer" }} onClick={handleSeek}>
+                   <span style={{ fontSize: "0.75rem", color: th.textMuted, width: 32 }}>{formatTime(currentTime)}</span>
+                   <div style={{ flex: 1, height: 4, background: th.bgSkeleton1, borderRadius: 2, position: "relative", overflow: "hidden" }}>
+                     <div style={{ position: "absolute", top: 0, left: 0, bottom: 0, background: th.accent, width: `${duration ? (currentTime/duration)*100 : 0}%` }} />
+                   </div>
+                   <span style={{ fontSize: "0.75rem", color: th.textMuted, width: 32, textAlign: "right" }}>{formatTime(duration)}</span>
+                 </div>
+               )}
+            </div>
+          </div>
+
+          {/* RIGHT: Close & Actions */}
+          <div style={{ display: "flex", alignItems: "center", gap: "1rem", minWidth: 100, justifyContent: "flex-end" }}>
+             <button onClick={onClose} style={{ background: "transparent", border: "none", color: th.textMuted, cursor: "pointer", display: "flex", alignItems: "center" }}>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+             </button>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 // ─── MAIN APP ─────────────────────────────────────────────────────────────────
 export default function NewsApp() {
   const [night, setNight] = useState(true);
   const [activeCategory, setActiveCategory] = useState("top");
-  const [subTab, setSubTab] = useState(null);
+  const [subTab, setSubTab] = useState<string|null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [readerItem, setReaderItem] = useState<any>(null);
   const [choiceItem, setChoiceItem] = useState<any>(null);
+  const [audioItem, setAudioItem] = useState<any>(null);
   const [userCountry, setUserCountry] = useState<string|null>(null);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   
   const [articles, setArticles] = useState([]);
   const [videos, setVideos] = useState([]);
@@ -515,34 +729,53 @@ export default function NewsApp() {
   const filteredRadio = RADIO_STATIONS.filter(r => r.name.toLowerCase().includes(searchQuery.toLowerCase()) || r.genre.toLowerCase().includes(searchQuery.toLowerCase()));
 
   return (
-    <div style={{ minHeight:"100vh", background:th.bg, color:th.text, transition:"background 0.3s, color 0.3s", width:"100%", fontFamily:"system-ui, sans-serif" }}>
+    <div style={{ minHeight:"100vh", background:th.bg, color:th.text, transition:"background 0.3s, color 0.3s", width:"100%", overflowX: "hidden", fontFamily:"system-ui, sans-serif" }}>
       
       {/* HEADER */}
-      <header style={{ padding:"1.25rem 2rem", display:"flex", justifyContent:"space-between", alignItems:"center", background:th.bgHeader, borderBottom:`1px solid ${th.border}` }}>
-        <h1 style={{ fontFamily:"'Playfair Display', serif", fontWeight:900, fontSize:"1.5rem", color:th.textHead, margin:0, fontStyle:"italic", letterSpacing:"-0.03em" }}>
-          TheNewsHub <span style={{ fontSize:"0.6rem", color:th.textMuted, letterSpacing:"0.15em", fontStyle:"normal", verticalAlign:"top", marginLeft:4 }}>LIVE</span>
-        </h1>
-        <div style={{ flex:1, display:"flex", justifyContent:"center", padding:"0 2rem" }}>
-          <div style={{ width: "100%", maxWidth: 480, position: "relative" }}>
-            <span style={{ position:"absolute", left:"1rem", top:"50%", transform:"translateY(-50%)", color:th.textMuted, fontSize:"0.875rem" }}>⌕</span>
-            <input type="text" placeholder="Search..." value={searchQuery} onChange={e=>setSearchQuery(e.target.value)} style={{ width:"100%", padding:"0.6rem 1rem 0.6rem 2.5rem", borderRadius:8, background:th.bgInput, border:`1px solid ${th.border}`, color:th.textBody, fontSize:"0.875rem", outline:"none" }} />
-          </div>
-        </div>
-        <div style={{ display:"flex", gap:"1.5rem", alignItems:"center" }}>
-          <div style={{ fontSize:"0.5625rem", letterSpacing:"0.15em", textTransform:"uppercase", color:th.textMuted, textAlign:"right", lineHeight:1.4 }}>
-            UPDATED<br/>
-            {new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-          </div>
-          <button onClick={()=>setNight(!night)} style={{ display:"flex", alignItems:"center", gap:"0.5rem", background:th.bgInput, border:`1px solid ${th.accent}`, padding:"0.4rem 1rem", borderRadius:9999, color:th.accent, fontSize:"0.625rem", cursor:"pointer", textTransform:"uppercase", fontWeight:"bold", letterSpacing:"0.1em" }}>
-            <span style={{ fontSize:"0.875rem" }}>{night?"🌕":"☀️"}</span>
-            <span>{night?"NIGHT":"DAY"}</span>
-          </button>
-        </div>
+      <header style={{ padding: isMobile ? "1rem" : "1.25rem 2rem", display:"flex", flexDirection: isMobile ? "column" : "row", gap: isMobile ? "1rem" : "0", justifyContent:"space-between", alignItems:"center", background:th.bgHeader, borderBottom:`1px solid ${th.border}` }}>
+        {isMobile ? (
+          <>
+            <div style={{ display:"flex", width:"100%", justifyContent:"space-between", alignItems:"center" }}>
+              <h1 style={{ fontFamily:"'Playfair Display', serif", fontWeight:900, fontSize: "1.75rem", color:th.textHead, margin:0, fontStyle:"italic", letterSpacing:"-0.03em" }}>
+                TheNewsHub <span style={{ fontSize:"0.6rem", color:th.textMuted, letterSpacing:"0.15em", fontStyle:"normal", verticalAlign:"top", marginLeft:4 }}>LIVE</span>
+              </h1>
+              <button onClick={()=>setNight(!night)} style={{ display:"flex", alignItems:"center", justifyContent:"center", background:th.bgInput, border:`1px solid ${th.accent}`, width:"2.5rem", height:"2.5rem", borderRadius:"50%", color:th.accent, cursor:"pointer" }}>
+                <span style={{ fontSize:"1.25rem" }}>{night?"🌕":"☀️"}</span>
+              </button>
+            </div>
+            <div style={{ width: "100%", position: "relative" }}>
+              <span style={{ position:"absolute", left:"1rem", top:"50%", transform:"translateY(-50%)", color:th.textMuted, fontSize:"0.875rem" }}>⌕</span>
+              <input type="text" placeholder="Search..." value={searchQuery} onChange={e=>setSearchQuery(e.target.value)} style={{ width:"100%", padding:"0.75rem 1rem 0.75rem 2.5rem", borderRadius:8, background:th.bgInput, border:`1px solid ${th.border}`, color:th.textBody, fontSize:"1rem", outline:"none" }} />
+            </div>
+          </>
+        ) : (
+          <>
+            <h1 style={{ fontFamily:"'Playfair Display', serif", fontWeight:900, fontSize:"1.5rem", color:th.textHead, margin:0, fontStyle:"italic", letterSpacing:"-0.03em" }}>
+              TheNewsHub <span style={{ fontSize:"0.6rem", color:th.textMuted, letterSpacing:"0.15em", fontStyle:"normal", verticalAlign:"top", marginLeft:4 }}>LIVE</span>
+            </h1>
+            <div style={{ flex:1, display:"flex", justifyContent:"center", padding:"0 2rem" }}>
+              <div style={{ width: "100%", maxWidth: 480, position: "relative" }}>
+                <span style={{ position:"absolute", left:"1rem", top:"50%", transform:"translateY(-50%)", color:th.textMuted, fontSize:"0.875rem" }}>⌕</span>
+                <input type="text" placeholder="Search..." value={searchQuery} onChange={e=>setSearchQuery(e.target.value)} style={{ width:"100%", padding:"0.6rem 1rem 0.6rem 2.5rem", borderRadius:8, background:th.bgInput, border:`1px solid ${th.border}`, color:th.textBody, fontSize:"0.875rem", outline:"none" }} />
+              </div>
+            </div>
+            <div style={{ display:"flex", gap:"1.5rem", alignItems:"center" }}>
+              <div style={{ fontSize:"0.5625rem", letterSpacing:"0.15em", textTransform:"uppercase", color:th.textMuted, textAlign:"right", lineHeight:1.4 }}>
+                UPDATED<br/>
+                {new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+              </div>
+              <button onClick={()=>setNight(!night)} style={{ display:"flex", alignItems:"center", gap:"0.5rem", background:th.bgInput, border:`1px solid ${th.accent}`, padding:"0.4rem 1rem", borderRadius:9999, color:th.accent, fontSize:"0.625rem", cursor:"pointer", textTransform:"uppercase", fontWeight:"bold", letterSpacing:"0.1em" }}>
+                <span style={{ fontSize:"0.875rem" }}>{night?"🌕":"☀️"}</span>
+                <span>{night?"NIGHT":"DAY"}</span>
+              </button>
+            </div>
+          </>
+        )}
       </header>
 
       {/* CATEGORIES NAV */}
-      <div style={{ borderBottom:`1px solid ${th.border}`, padding:"0 2rem", overflowX:"auto", scrollbarWidth:"none", display:"flex", justifyContent:"center" }}>
-        <div style={{ display:"flex", gap:"2rem" }}>
+      <div style={{ width: "100%", borderBottom:`1px solid ${th.border}`, padding: isMobile ? "0 1rem" : "0 2rem", overflowX:"auto", scrollbarWidth:"none", display:"flex", justifyContent: isMobile ? "flex-start" : "center" }}>
+        <div style={{ flexShrink: 0, display:"flex", gap: isMobile ? "1rem" : "2rem" }}>
           {CATEGORIES.map(cat => {
             const isActive = activeCategory === cat.id;
             return (
@@ -570,8 +803,8 @@ export default function NewsApp() {
 
       {/* SUB-CATEGORIES NAV */}
       {(activeCategory === "live" || activeCategory === "vibe") && (
-        <div style={{ display:"flex", justifyContent:"center", padding:"1.25rem 2rem", borderBottom:`1px solid ${th.border}` }}>
-          <div style={{ display:"flex", gap:"1rem" }}>
+        <div style={{ width:"100%", display:"flex", justifyContent: isMobile ? "flex-start" : "center", padding: isMobile ? "1rem" : "1.25rem 2rem", borderBottom:`1px solid ${th.border}`, overflowX:"auto", scrollbarWidth:"none" }}>
+          <div style={{ flexShrink: 0, display:"flex", gap:"1rem", paddingRight: isMobile ? "2rem" : "0" }}>
             {(activeCategory === "live" ? MEDIA_SECTIONS : VIBE_SECTIONS).map(sub => (
               <button 
                 key={sub.id} 
@@ -593,7 +826,7 @@ export default function NewsApp() {
 
       {/* SUB-HEADER LABEL (Vibe or Media) */}
       {(activeCategory === "vibe" || activeCategory === "live") && subTab && (
-        <div style={{ padding:"1.5rem 2rem 0", display:"flex", alignItems:"center", gap:"1.5rem" }}>
+        <div style={{ padding: isMobile ? "1rem 1rem 0" : "1.5rem 2rem 0", display:"flex", alignItems:"center", gap:"1.5rem" }}>
           <h2 style={{ fontSize:"1.25rem", fontWeight:800, margin:0, display:"flex", alignItems:"center", gap:"0.5rem", color:th.textHead }}>
              {(activeCategory==="live"?MEDIA_SECTIONS:VIBE_SECTIONS).find(s=>s.id===subTab)?.label}
           </h2>
@@ -604,9 +837,9 @@ export default function NewsApp() {
       )}
 
       {/* MAIN CONTENT AREA */}
-      <main style={{ padding: "2rem", maxWidth: 1400, margin: "0 auto", width: "100%" }}>
+      <main style={{ padding: isMobile ? "1rem" : "2rem", maxWidth: 1400, margin: "0 auto", width: "100%", paddingBottom: audioItem ? (isMobile ? "120px" : "100px") : (isMobile ? "1rem" : "2rem") }}>
         {loading ? (
-          <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit, minmax(320px, 1fr))", gap:"2rem" }}>
+          <div style={{ display:"grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(auto-fit, minmax(320px, 1fr))", gap: isMobile ? "1rem" : "2rem" }}>
             <SkeletonCard th={th}/>
             <SkeletonCard th={th}/>
             <SkeletonCard th={th}/>
@@ -619,19 +852,19 @@ export default function NewsApp() {
         ) : (
           <div style={{ 
             display:"grid", 
-            gridTemplateColumns: activeCategory==="live" && subTab==="radio" ? "repeat(auto-fill, minmax(300px, 1fr))" 
+            gridTemplateColumns: isMobile ? "1fr" : (activeCategory==="live" && subTab==="radio" ? "repeat(auto-fill, minmax(300px, 1fr))" 
               : activeCategory==="live" && subTab==="podcasts" ? "repeat(auto-fill, minmax(400px, 1fr))"
-              : "repeat(auto-fill, minmax(360px, 1fr))", 
-            gap:"2rem" 
+              : "repeat(auto-fill, minmax(360px, 1fr))"), 
+            gap: isMobile ? "1rem" : "2rem" 
           }}>
             {activeCategory === "live" ? (
-               subTab === "video" ? filteredVideos.map((v,i) => <VideoCard key={i} video={v} onPlay={(mode:string) => mode==="choose" ? setChoiceItem({type:"video", item:v}) : mode==="browser" ? window.open(v.url) : setReaderItem({type:"video", item:v})} th={th} />) :
-               subTab === "podcasts" ? filteredPodcasts.map((p,i) => <PodcastCard key={i} podcast={p} onPlay={(mode:string) => mode==="browser" ? window.open(p.mp3) : setReaderItem({type:"audio", item:p})} th={th} />) :
-               filteredRadio.map((r,i) => <RadioCard key={i} radio={r} onPlay={(mode:string) => mode==="browser" ? window.open(r.url) : setReaderItem({type:"audio", item:r})} th={th} />)
+               subTab === "video" ? filteredVideos.map((v:any,i:number) => <VideoCard key={i} video={v} onPlay={(mode:string) => mode==="choose" ? setChoiceItem({type:"video", item:v}) : mode==="browser" ? window.open(v.url) : setReaderItem({type:"video", item:v})} th={th} />) :
+               subTab === "podcasts" ? filteredPodcasts.map((p:any,i:number) => <PodcastCard key={i} podcast={p} onPlay={(mode:string) => mode==="browser" ? window.open(p.mp3) : setAudioItem(p)} th={th} />) :
+               filteredRadio.map((r:any,i:number) => <RadioCard key={i} radio={r} onPlay={(mode:string) => mode==="browser" ? window.open(r.url) : setAudioItem(r)} th={th} />)
             ) : (
                <>
-                 {featured && <NewsCard article={featured} featured onRead={(mode:string) => mode==="browser" ? window.open(featured.url) : setReaderItem({type:"article", item:featured})} th={th} bookmarks={bookmarks} onBookmark={toggleBookmark} />}
-                 {mixed.map((a: any,i: number) => <NewsCard key={a.id||i} article={a} onRead={(mode:string) => mode==="browser" ? window.open(a.url) : setReaderItem({type:"article", item:a})} th={th} bookmarks={bookmarks} onBookmark={toggleBookmark} />)}
+                 {featured && <NewsCard activeCategory={activeCategory} article={featured} featured onRead={(mode:string) => mode==="browser" ? window.open(featured.url) : setReaderItem({type:"article", item:featured})} th={th} bookmarks={bookmarks} onBookmark={toggleBookmark} />}
+                 {mixed.map((a: any,i: number) => <NewsCard activeCategory={activeCategory} key={a.id||i} article={a} onRead={(mode:string) => mode==="browser" ? window.open(a.url) : setReaderItem({type:"article", item:a})} th={th} bookmarks={bookmarks} onBookmark={toggleBookmark} />)}
                </>
             )}
           </div>
@@ -650,7 +883,7 @@ export default function NewsApp() {
           >
             <h3 style={{ fontSize: "1.25rem", color: th.textHead, marginBottom: "1rem", marginTop: 0 }}>Play Video</h3>
             <p style={{ color: th.textBody, marginBottom: "2rem", fontSize: "0.875rem" }}>Would you like to watch this video here or open YouTube in a new tab?</p>
-            <div style={{ display: "flex", gap: "1rem", justifyContent: "center" }}>
+            <div style={{ display: "flex", gap: "1rem", justifyContent: "center", flexDirection: isMobile ? "column" : "row" }}>
               <button 
                 onClick={() => { setReaderItem(choiceItem); setChoiceItem(null); }}
                 style={{ background: th.accentBg, color: th.accent, border: `1px solid ${th.accent}`, padding: "0.75rem 1.5rem", borderRadius: 8, cursor: "pointer", fontWeight: "bold" }}
@@ -670,23 +903,24 @@ export default function NewsApp() {
 
       {readerItem && (
         <div 
-          style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.8)", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", padding: "2rem" }} 
+          style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.8)", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", padding: isMobile ? "0" : "2rem" }} 
           onClick={() => setReaderItem(null)}
         >
           <div 
-            style={{ background: th.bg, width: "100%", maxWidth: readerItem.type === 'video' ? 1000 : 800, height: "90vh", borderRadius: 12, overflow: "hidden", display: "flex", flexDirection: "column", position: "relative", border: `1px solid ${th.border}`, boxShadow: "0 20px 50px rgba(0,0,0,0.5)" }} 
+            style={{ background: th.bg, width: "100%", maxWidth: readerItem.type === 'video' ? 1000 : 800, height: isMobile ? "100vh" : "90vh", borderRadius: isMobile ? 0 : 12, overflow: "hidden", display: "flex", flexDirection: "column", position: "relative", border: `1px solid ${th.border}`, boxShadow: "0 20px 50px rgba(0,0,0,0.5)" }} 
             onClick={e => e.stopPropagation()}
           >
-            <div style={{ padding: "1rem 1.5rem", borderBottom: `1px solid ${th.border}`, display: "flex", justifyContent: "space-between", alignItems: "center", background: th.bgHeader }}>
-              <h3 style={{ margin: 0, fontSize: "1.125rem", color: th.textHead, fontWeight: "bold", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", paddingRight: "1rem" }}>
+            <div style={{ padding: isMobile ? "1rem" : "1rem 1.5rem", borderBottom: `1px solid ${th.border}`, display: "flex", justifyContent: "space-between", alignItems: "center", background: th.bgHeader }}>
+              <h3 style={{ margin: 0, fontSize: isMobile ? "1rem" : "1.125rem", color: th.textHead, fontWeight: "bold", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", paddingRight: "0.5rem" }}>
                  {readerItem.item.title || readerItem.item.name}
               </h3>
-              <div style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
+              <div style={{ display: "flex", gap: isMobile ? "0.5rem" : "1rem", alignItems: "center" }}>
                 <button onClick={() => {
                   const url = readerItem.item.url || readerItem.item.mp3;
                   if (url) window.open(url, "_blank");
                 }} style={{ background: th.bgInput, border: `1px solid ${th.border}`, color: th.textHead, cursor: "pointer", display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.75rem", padding: "0.4rem 0.75rem", borderRadius: 6, fontWeight: "bold" }}>
-                  <span>↗</span> OPEN IN BROWSER
+                  <span style={{ display: isMobile ? "none" : "inline" }}>↗ OPEN IN BROWSER</span>
+                  <span style={{ display: isMobile ? "inline" : "none" }}>↗ OPEN</span>
                 </button>
                 <button onClick={() => setReaderItem(null)} style={{ background: "transparent", border: "none", color: th.textMuted, cursor: "pointer", fontSize: "1.75rem", lineHeight: 1, padding: "0 0.25rem" }}>&times;</button>
               </div>
@@ -695,26 +929,17 @@ export default function NewsApp() {
               {readerItem.type === 'video' && (
                 <iframe src={`https://www.youtube.com/embed/${readerItem.item.videoId || readerItem.item.id.replace(/^yt-/, '').replace(/^yt:video:/, '')}?autoplay=1`} style={{ width: "100%", height: "100%", border: "none" }} allow="autoplay; encrypted-media; fullscreen" allowFullScreen />
               )}
-              {readerItem.type === 'audio' && (
-                <div style={{ padding: "4rem 2rem", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100%", gap: "3rem" }}>
-                   <div style={{ width: 240, height: 240, borderRadius: "50%", background: th.bgSkeleton2, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "6rem", overflow: "hidden", border: `1px solid ${th.border}`, boxShadow: "0 10px 40px rgba(0,0,0,0.2)" }}>
-                       {readerItem.item.image ? <img src={readerItem.item.image} style={{width:"100%", height:"100%", objectFit:"cover"}} /> : "📻"}
-                   </div>
-                   <div style={{ textAlign: "center" }}>
-                       <div style={{ fontSize: "1.5rem", fontWeight: "bold", color: th.textHead, marginBottom: "0.5rem" }}>{readerItem.item.title || readerItem.item.name}</div>
-                       <div style={{ fontSize: "1rem", color: th.textMuted }}>{readerItem.item.source || readerItem.item.genre || readerItem.item.podcast}</div>
-                   </div>
-                   <audio src={readerItem.item.url || readerItem.item.mp3} controls autoPlay style={{ width: "100%", maxWidth: 600 }} />
-                </div>
-              )}
               {readerItem.type === 'article' && (
-                <ArticleReader article={readerItem.item} th={th} />
+                <ArticleReader article={readerItem.item} th={th} isMobile={isMobile} />
               )}
             </div>
           </div>
         </div>
       )}
 
+      {audioItem && (
+        <AudioPlayerBar item={audioItem} th={th} isMobile={isMobile} onClose={() => setAudioItem(null)} />
+      )}
     </div>
   );
 }

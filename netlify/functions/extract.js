@@ -168,16 +168,16 @@ function extractText(html) {
     .replace(/&quot;/g, '"')
     .replace(/&#39;/g, "'")
     .replace(/&[a-z]+;/gi, " ")
-    .replace(/\\n{3,}/g, "\\n\\n") // collapse excess newlines
+    .replace(/\n{3,}/g, "\n\n") // collapse excess newlines
     .trim();
 
   // 5. Split into paragraphs, filter noise, return meaningful content
   const paragraphs = text
-    .split("\\n\\n")
+    .split("\n\n")
     .map(p => p.trim())
     .filter(p => p.length > 60); // skip short nav fragments
 
-  return paragraphs.join("\\n\\n");
+  return paragraphs.join("\n\n");
 }
 
 // ─── HELPERS ──────────────────────────────────────────────────────────────────
